@@ -1,0 +1,8 @@
+cint 0
+cint 10
+pop i
+push i
+pop i
+pop i
+push i
+print
