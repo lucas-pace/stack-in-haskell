@@ -42,11 +42,11 @@ processarLinha linha stack vars = do
 
         let first = head palavras -- primeira instrucao
         let second = tail palavras  -- parametro da instrucao se houver
-
+        let argument = head second
         if isSubsequenceOf "cint" first -- ## depois do then so podemos ter um linha, com o do ele transforma tudo em 1 linha
                 then do
                         --print "cint"
-                        let argument = head second
+
                         let newStack = push ("int", argument) stack
                         return (newStack, vars)
 
@@ -148,18 +148,21 @@ processarLinha linha stack vars = do
 
                         input <- getLine
                         if isSubsequenceOf "true" (map toLower input)
-                                then do print "true"
-                                        return (stack, vars)
+                                then do
+                                        let newStack = push ("bool", "true") stack
+                                        return (newStack, vars)
                         else if isSubsequenceOf "false" (map toLower input)
-                                then do print "false"
-                                        return (stack, vars)
+                                then do
+                                        let newStack = push ("bool", "false") stack
+                                        return (newStack, vars)
 
                         else if (checkNum input)
                                 then do
-                                        print "number"
-                                        return (stack, vars)
-                        else
-                                return (stack, vars)
+                                        let newStack = push ("int", input) stack
+                                        return (newStack, vars)
+                        else do
+                                let newStack = push ("str", input) stack
+                                return (newStack, vars)
 
         else if isSubsequenceOf "print" first
                 then do
@@ -177,22 +180,28 @@ processarLinha linha stack vars = do
         --                 print second
         --                 return (stack, vars)
 
-        -- else if isSubsequenceOf "cmp" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "cmp" first
+                then do let num1 = top stack
+                        let temporaryStack = pop stack
+                        let num2 = top temporaryStack
+                        let temporaryStack2 = pop temporaryStack
+
+                        if (num1 == num2) then do
+                                let newStack = push ("bool", "true") temporaryStack2
+                                return (newStack, vars)
+
+                        else do let newStack = push ("bool", "false") temporaryStack2
+                                return (newStack, vars)
 
 
-        -- else if isSubsequenceOf "cstr" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "cstr" first
+                then do
+                        let newStack = push ("str",argument) stack
+                        return (newStack,vars)
 
 
-        -- else if isSubsequenceOf "nop" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "nop" first
+                then do return (stack,vars)
 
         else return (stack,vars)
 
