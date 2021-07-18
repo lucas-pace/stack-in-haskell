@@ -1,4 +1,15 @@
-cint 1
+cint 0
 cint 10
-cstr e3
+pop i
+push i
+cint 0
+cmp
+dcond 15
+read
+add
+push i
+cint 1
+sub
+pop i
+jump 4
 print

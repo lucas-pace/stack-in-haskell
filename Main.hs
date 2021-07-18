@@ -16,13 +16,14 @@ import Data.Char
 main = do
         content <- readFile "programa.txt"
         let linesList = lines content
+        let allLines = lines content
         let stack =  empty
         let vars = []
         let returned = ("","")
-        percorrerLinhas linesList stack vars
+        percorrerLinhas linesList stack vars allLines
 
 
-percorrerLinhas inputList stack vars = do
+percorrerLinhas inputList stack vars allLines = do
     if null inputList
         then return ()
     else do
@@ -30,11 +31,27 @@ percorrerLinhas inputList stack vars = do
       if null line
           then return ()
           else do -- processando a linha head e passando a tail para recursão.
-              returned <- processarLinha line stack vars
+                returned <- processarLinha line stack vars
 
-              let newStack = (fst returned)
-              let vars = (snd returned)
-              percorrerLinhas (tail inputList) newStack vars
+
+                --nova pilha e variaveis
+                let newStack = (fst returned)
+                let vars = (snd returned)
+
+                -- verificando presenca de jump e execuntando. Verifica se ha algo na memoria, caso tenha, verifica se a ultima instrução adiciona é um jump. Se for, muda a lista de linhas restantes para as linhas a partir da linha desejada.
+                if (not) (vars == []) then do
+                        if  (fst (head vars)) == "" then do
+                                if  (fst(snd (head vars))) == "jump" then do
+                                        let numberOfLine = (read (snd(snd (head vars))) :: Int ) - 1
+                                        let newLines = drop' numberOfLine allLines
+                                        let newVars = drop' 1 vars -- removendo da memoria o jump
+                                        --print newVars
+                                        percorrerLinhas newLines newStack newVars allLines
+
+                                else do print "error?"
+                        else do percorrerLinhas (tail inputList) newStack vars allLines
+                else do
+                        percorrerLinhas (tail inputList) newStack vars allLines
 
 
 processarLinha linha stack vars = do
@@ -43,7 +60,7 @@ processarLinha linha stack vars = do
         let first = head palavras -- primeira instrucao
         let second = tail palavras  -- parametro da instrucao se houver
         let argument = head second
-        if isSubsequenceOf "cint" first -- ## depois do then so podemos ter um linha, com o do ele transforma tudo em 1 linha
+        if isSubsequenceOf "cint" first
                 then do
                         --print "cint"
 
@@ -51,28 +68,28 @@ processarLinha linha stack vars = do
                         return (newStack, vars)
 
         else if isSubsequenceOf "push" first
-                then do let var = head second
-                        let searchResult = search var vars
+                then do
+                        let searchResult = search argument vars
                         let newStack = push (head searchResult) stack
                         -- print newStack
                         return (newStack, vars)
 
 
         else if isSubsequenceOf "pop" first
-                then do let var = head second
+                then do
                         let value = top stack
                         let newStack = pop stack -- retirna valor da pilha e a atualiza
-                        let searchResult = search var vars
+                        let searchResult = search argument vars
                         let searchResult2 = search2 (head searchResult) vars
 
                         if (not) (searchResult == []) -- caso tenha alguma variavel com o mesmo nome ja salva, deletamos ela e inserimos a nova.
                                 then do
 
                                         let temporaryVars = delete ((head searchResult2),(head searchResult)) vars
-                                        let newVars = temporaryVars ++ [(var,(fst value,snd value))]
+                                        let newVars = temporaryVars ++ [(argument,(fst value,snd value))]
                                         return (newStack, newVars)
                         else do
-                                let newVars = vars ++ [(var,(fst value,snd value))]
+                                let newVars = vars ++ [(argument,(fst value,snd value))]
                                 return (newStack, newVars)
 
 
@@ -166,19 +183,29 @@ processarLinha linha stack vars = do
 
         else if isSubsequenceOf "print" first
                 then do
-                        print(stack)
-                        print(vars)
-                        return (stack, vars)
+                        let topo = top stack
+                        let newStack = pop stack
+                        print ( read (snd topo) :: Integer)
+                        return (newStack, vars)
 
-        -- else if isSubsequenceOf "jump" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "jump" first
+                then do
+                        let newVars = ("",("jump",argument)) : vars
+                        return (stack, newVars)
 
-        -- else if isSubsequenceOf "dcond" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "dcond" first
+                then do
+                        let topo = top stack
+                        let tipo = (fst topo)
+                        let value = (snd topo)
+                        let newStack = pop stack
+                        if (tipo == "bool" && value == "true")
+                                then do
+                                        let newVars = ("",("jump",argument)) : vars
+                                        return (newStack, newVars)
+                        else do
+
+                                return (newStack, vars)
 
         else if isSubsequenceOf "cmp" first
                 then do let num1 = top stack
@@ -205,11 +232,23 @@ processarLinha linha stack vars = do
 
         else return (stack,vars)
 
+-- dado uma lista de tupla, devolve uma lista de tuplas (a,b) em que a = argumento passado
 search :: (Eq a) => a -> [(a,b)] -> [b]
 search x = map snd . filter ((==x).fst)
 
+
+-- dado uma lista de tupla, devolve uma lista de tuplas (a,b) em que b = argumento passado
 search2 :: (Eq b) => b -> [(a,b)] -> [a]
 search2 x = map fst . filter ((==x).snd)
 
+-- checa se todos os numeros da string sao digitos
 checkNum :: String -> Bool
 checkNum = all isDigit
+
+
+
+-- remove os N primeiros elementos de uma lista
+drop' :: Int -> [a] -> [a]
+drop' _ [] = []
+drop' 0 ys = ys
+drop' x ys = drop' (x-1) (tail ys)
