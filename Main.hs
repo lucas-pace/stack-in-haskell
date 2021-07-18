@@ -2,13 +2,16 @@
 --https://stackoverflow.com/questions/5952167/how-do-i-print-a-list-in-haskell
 --https://stackoverflow.com/questions/19956221/reading-lines-and-reversing-the-text-with-haskell
 --https://stackoverflow.com/questions/40566940/searching-through-list-of-tuples
-
+--https://stackoverflow.com/questions/2784271/haskell-converting-int-to-string/46924479
+--https://stackoverflow.com/questions/20667478/haskell-string-int-type-conversion
+--https://stackoverflow.com/questions/46568661/how-do-i-correctly-use-tolower-in-haskell
+--https://stackoverflow.com/questions/30029029/haskell-check-if-string-is-valid-number
 
 import System.IO
 import Data.List.Split
 import Data.List
 import Stack
-
+import Data.Char
 
 main = do
         content <- readFile "programa.txt"
@@ -51,7 +54,7 @@ processarLinha linha stack vars = do
                 then do let var = head second
                         let searchResult = search var vars
                         let newStack = push (head searchResult) stack
-                        print newStack
+                        -- print newStack
                         return (newStack, vars)
 
 
@@ -62,66 +65,104 @@ processarLinha linha stack vars = do
                         let searchResult = search var vars
                         let searchResult2 = search2 (head searchResult) vars
 
-                        if (not) (searchResult == [])
+                        if (not) (searchResult == []) -- caso tenha alguma variavel com o mesmo nome ja salva, deletamos ela e inserimos a nova.
                                 then do
-                                        -- print (head searchResult)
-                                        -- print (tail searchResult)
 
-                                        --let newStack = push (head searchResult) stack
                                         let temporaryVars = delete ((head searchResult2),(head searchResult)) vars
-
                                         let newVars = temporaryVars ++ [(var,(fst value,snd value))]
-                                        -- let newVars = delete (head searchResult) vars
-
                                         return (newStack, newVars)
-                                        -- if (not) (tailSearch == []) then do
-                                        --         return (newStack, tailSearch)
-                                        -- else do
-                                        --         return (newStack, [])
                         else do
-                                let newVars = vars ++ [(var,(fst value,snd value))] -- atualiza lista de variaveis
+                                let newVars = vars ++ [(var,(fst value,snd value))]
                                 return (newStack, newVars)
 
 
 
+        else if isSubsequenceOf "add" first
+                then do
+                        let num1 = read (snd (top stack)) :: Integer
+                        let temporaryStack = pop stack
+                        let num2 = read (snd (top temporaryStack)) :: Integer
+                        let temporaryStack2 = pop temporaryStack
 
 
+                        let sum = show  (num1 + num2)
+                        let newStack = push ("int",sum) temporaryStack2
+
+                        return (newStack, vars)
+
+        else if isSubsequenceOf "sub" first
+                then do
+                        let num1 = read (snd (top stack)) :: Integer
+                        let temporaryStack = pop stack
+                        let num2 = read (snd (top temporaryStack)) :: Integer
+                        let temporaryStack2 = pop temporaryStack
 
 
-        -- else if isSubsequenceOf "add" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+                        let sub = show  (num2 - num1)
+                        let newStack = push ("int",sub) temporaryStack2
 
-        -- else if isSubsequenceOf "sub" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+                        return (newStack, vars)
 
-        -- else if isSubsequenceOf "mult" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+        else if isSubsequenceOf "mult" first
+                then do
+                        let num1 = read (snd (top stack)) :: Integer
+                        let temporaryStack = pop stack
+                        let num2 = read (snd (top temporaryStack)) :: Integer
+                        let temporaryStack2 = pop temporaryStack
 
-        -- else if isSubsequenceOf "div" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
 
-        -- else if isSubsequenceOf "mod" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+                        let mult = show  (num1 * num2)
+                        let newStack = push ("int",mult) temporaryStack2
 
-        -- else if isSubsequenceOf "read" first
-        --         then do print first
-        --                 print second
-        --                 return (stack, vars)
+                        return (newStack, vars)
+
+        else if isSubsequenceOf "div" first
+                then do
+                        let num1 = read (snd (top stack)) :: Integer
+                        let temporaryStack = pop stack
+                        let num2 = read (snd (top temporaryStack)) :: Integer
+                        let temporaryStack2 = pop temporaryStack
+
+                        let divResult = div num1 num2
+                        let div = show  (divResult)
+                        let newStack = push ("int",div) temporaryStack2
+
+                        return (newStack, vars)
+
+        else if isSubsequenceOf "mod" first
+                then do
+                        let num1 = read (snd (top stack)) :: Integer
+                        let temporaryStack = pop stack
+                        let num2 = read (snd (top temporaryStack)) :: Integer
+                        let temporaryStack2 = pop temporaryStack
+
+                        let modResult = mod num1 num2
+                        let mod = show  (modResult)
+                        let newStack = push ("int",mod) temporaryStack2
+
+                        return (newStack, vars)
+
+
+        else if isSubsequenceOf "read" first
+                then do
+
+                        input <- getLine
+                        if isSubsequenceOf "true" (map toLower input)
+                                then do print "true"
+                                        return (stack, vars)
+                        else if isSubsequenceOf "false" (map toLower input)
+                                then do print "false"
+                                        return (stack, vars)
+
+                        else if (checkNum input)
+                                then do
+                                        print "number"
+                                        return (stack, vars)
+                        else
+                                return (stack, vars)
 
         else if isSubsequenceOf "print" first
-                then do --print first
-                        -- let topo = top stack
-                        -- let typ = fst topo
+                then do
                         print(stack)
                         print(vars)
                         return (stack, vars)
@@ -160,3 +201,6 @@ search x = map snd . filter ((==x).fst)
 
 search2 :: (Eq b) => b -> [(a,b)] -> [a]
 search2 x = map fst . filter ((==x).snd)
+
+checkNum :: String -> Bool
+checkNum = all isDigit
