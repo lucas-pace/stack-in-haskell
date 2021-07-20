@@ -33,7 +33,6 @@ percorrerLinhas inputList stack vars allLines = do
           else do -- processando a linha head e passando a tail para recursão.
                 returned <- processarLinha line stack vars
 
-
                 --nova pilha e variaveis
                 let newStack = (fst returned)
                 let vars = (snd returned)
@@ -45,7 +44,7 @@ percorrerLinhas inputList stack vars allLines = do
                                         let numberOfLine = (read (snd(snd (head vars))) :: Int ) - 1
                                         let newLines = drop' numberOfLine allLines
                                         let newVars = drop' 1 vars -- removendo da memoria o jump
-                                        --print newVars
+
                                         percorrerLinhas newLines newStack newVars allLines
 
                                 else do print "error?"
@@ -62,7 +61,7 @@ processarLinha linha stack vars = do
         let argument = head second
         if isSubsequenceOf "cint" first
                 then do
-                        --print "cint"
+
 
                         let newStack = push ("int", argument) stack
                         return (newStack, vars)
@@ -71,14 +70,14 @@ processarLinha linha stack vars = do
                 then do
                         let searchResult = search argument vars
                         let newStack = push (head searchResult) stack
-                        -- print newStack
+
                         return (newStack, vars)
 
 
         else if isSubsequenceOf "pop" first
                 then do
                         let value = top stack
-                        let newStack = pop stack -- retirna valor da pilha e a atualiza
+                        let newStack = pop stack
                         let searchResult = search argument vars
                         let searchResult2 = search2 (head searchResult) vars
 
